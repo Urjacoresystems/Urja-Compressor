@@ -2,5 +2,5 @@ services:
   web:
     image: ${IMAGE:-ghcr.io/OWNER/urja-compressor:latest}
     ports:
-      - "80:3000"
+      - "127.0.0.1:3001:3000"
     restart: unless-stopped
