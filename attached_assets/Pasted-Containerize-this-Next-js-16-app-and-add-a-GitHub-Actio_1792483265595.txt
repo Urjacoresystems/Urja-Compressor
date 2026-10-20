@@ -1,0 +1,33 @@
+Containerize this Next.js 16 app and add a GitHub Actions CI/CD pipeline that deploys to an AWS EC2 server. 
+Do not change any app UI or logic.
+
+DOCKER
+- In next.config.mjs keep reactStrictMode and turbopack: {} and add output: "standalone".
+- Create a multi-stage Dockerfile (node:22-alpine): deps stage (npm ci), build stage (npm run build), 
+  runner stage that copies .next/standalone, .next/static and public, runs as a non-root user, 
+  sets NODE_ENV=production, HOSTNAME=0.0.0.0, PORT=3000, EXPOSE 3000, CMD ["node","server.js"], 
+  plus a HEALTHCHECK that requests http://localhost:3000/.
+- Create .dockerignore (node_modules, .next, .git, .github, *.md, Dockerfile, docker-compose.yml, .env*).
+- Create docker-compose.yml with one service "web": image from env IMAGE (default ghcr.io/OWNER/urja-compressor:latest), 
+  ports "80:3000", restart: unless-stopped.
+- Make sure package-lock.json exists and is committed.
+
+CI/CD (.github/workflows/deploy.yml)
+- Trigger: push to main (also run build-only on pull requests).
+- Job "build": checkout, setup Node 22, npm ci, npm run build.
+- Job "docker" (only on push to main, needs build): login to ghcr.io with GITHUB_TOKEN, 
+  docker/setup-buildx-action, docker/build-push-action pushing two tags: latest and the commit SHA, 
+  with GitHub Actions cache (cache-from/cache-to type=gha). Lowercase the image name.
+- Job "deploy" (needs docker): use appleboy/ssh-action to SSH into the EC2 server with 
+  secrets EC2_HOST, EC2_USER, EC2_SSH_KEY and run: docker login ghcr.io using the run's GITHUB_TOKEN, 
+  docker pull the latest image, stop and remove the old container, start the new one 
+  (docker compose up -d), then docker image prune -f.
+- Permissions: contents read, packages write.
+
+DOCS
+- Add DEPLOY.md with the one-time EC2 setup (install Docker and the compose plugin, open ports 80 and 443 
+  in the security group, copy docker-compose.yml to the server home folder, add the three GitHub secrets) 
+  and the local test commands: docker build -t urja . and docker run -p 3000:3000 urja.
+
+Note: Replit cannot run Docker itself, so just create the files and verify the Next.js build passes 
+with npm run build.

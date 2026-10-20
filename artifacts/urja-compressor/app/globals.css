@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #F7F5F0;
+  --color-moss: #244232;
+  --color-slate2: #4A5568;
+  --color-beige: #E2DDD5;
+  --color-paper: #FCFBF8;
+  --font-serif: var(--font-newsreader), Georgia, serif;
+  --font-sans: var(--font-jakarta), system-ui, sans-serif;
+  --font-deva: var(--font-devanagari), serif;
+  --shadow-soft: 0 1px 0 #E2DDD5, 0 8px 24px -12px rgba(36,66,50,.18);
+}
+
+body { background: #F7F5F0; color: #2b2f2c; font-family: var(--font-jakarta), system-ui, sans-serif; }
+:focus-visible { outline: 2px solid #244232; outline-offset: 3px; }
+
+@layer components {
+  .btn { @apply inline-flex items-center justify-center rounded-md bg-moss px-5 py-2.5 text-sm font-medium text-cream shadow-[0_2px_0_#142a1f] transition active:translate-y-[2px] active:shadow-none disabled:opacity-50; }
+  .btn-quiet { @apply inline-flex items-center rounded-md border border-beige bg-paper px-4 py-2 text-sm text-slate2 transition hover:border-moss hover:text-moss; }
+  .field { @apply w-full rounded-md border border-beige bg-paper px-3 py-2 text-sm focus:border-moss; }
+}
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

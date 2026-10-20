@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "ऊर्जा Compressor"
+description = "A browser-based tool for compressing photos, signatures, and PDFs to exact size requirements while keeping files on the user's device."
+version = "1.0.0"
+id = "artifacts/urja-compressor"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24198
+
+[services.development]
+run = "pnpm --filter @workspace/urja-compressor run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/urja-compressor", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/urja-compressor/out"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24198"
+BASE_PATH = "/"
