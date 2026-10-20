@@ -74,37 +74,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # deploy:
-  #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-  #   needs: docker
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     contents: read
-  #     packages: read
-  #   steps:
-  #     - name: Deploy to EC2
-  #       uses: appleboy/ssh-action@v1.2.0
-  #       env:
-  #         IMAGE_NAME: ${{ needs.docker.outputs.image }}
-  #         GHCR_USER: ${{ github.actor }}
-  #         GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       with:
-  #         host: ${{ secrets.EC2_HOST }}
-  #         username: ${{ secrets.EC2_USER }}
-  #         key: ${{ secrets.EC2_SSH_KEY }}
-  #         envs: IMAGE_NAME,GHCR_USER,GHCR_TOKEN
-  #         script: |
-  #           set -eu
-  #           printf '%s' "$GHCR_TOKEN" | docker login ghcr.io --username "$GHCR_USER" --password-stdin
-  #           export IMAGE="${IMAGE_NAME}:latest"
-  #           cd "$HOME/urja-compressor"
-  #           docker pull "$IMAGE"
-  #           docker logout ghcr.io
-  #           docker compose stop web || true
-  #           docker compose rm -f web || true
-  #           docker compose up -d
-  #           docker image prune -f
-    deploy:
+  deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: docker
     runs-on: ubuntu-latest
@@ -146,5 +116,3 @@ jobs:
             docker compose rm -f web || true
             docker compose up -d
             docker image prune -f
-
-
