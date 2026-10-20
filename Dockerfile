@@ -1,6 +1,9 @@
+# Debian (glibc) based images: the workspace excludes musl native binaries (lightningcss, tailwind oxide),
+# so Alpine cannot build this app.
+
 # ---------- base: node + pnpm ----------
-FROM node:22-alpine AS base
-RUN apk add --no-cache libc6-compat && npm install -g pnpm@10
+FROM node:22-slim AS base
+RUN npm install -g pnpm@10
 ENV NEXT_TELEMETRY_DISABLED=1
 WORKDIR /app
 
@@ -24,23 +27,19 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/artifacts/urja-compressor/node_modules ./artifacts/urja-compressor/node_modules
 RUN pnpm --filter @workspace/urja-compressor run build
 
-# ---------- runner: small image, no pnpm ----------
-FROM node:22-alpine AS runner
-RUN apk add --no-cache libc6-compat
+# ---------- runner: no pnpm, runs as the built-in non-root "node" user ----------
+FROM node:22-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production \
     HOSTNAME=0.0.0.0 \
     PORT=3000 \
     NEXT_TELEMETRY_DISABLED=1
 
-RUN addgroup -S -g 1001 nodejs \
-    && adduser -S -u 1001 -G nodejs nextjs
+COPY --from=builder --chown=node:node /app/artifacts/urja-compressor/.next/standalone ./
+COPY --from=builder --chown=node:node /app/artifacts/urja-compressor/.next/static ./artifacts/urja-compressor/.next/static
+COPY --from=builder --chown=node:node /app/artifacts/urja-compressor/public ./artifacts/urja-compressor/public
 
-COPY --from=builder --chown=nextjs:nodejs /app/artifacts/urja-compressor/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/artifacts/urja-compressor/.next/static ./artifacts/urja-compressor/.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/artifacts/urja-compressor/public ./artifacts/urja-compressor/public
-
-USER nextjs
+USER node
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
